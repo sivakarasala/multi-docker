@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t shambho/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run shambho/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t shambho/multi-client ./client
+  - docker build -t shambho/multi-nginx ./nginx
+  - docker build -t shambho/multi-server ./server
+  - docker build -t shambho/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push shambho/multi-client
+  - docker push shambho/multi-nginx
+  - docker push shambho/multi-server
+  - docker push shambho/multi-worker
